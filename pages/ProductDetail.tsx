@@ -11,36 +11,58 @@ import {
   ArrowLeft,
   Phone,
   PackageCheck,
-  ShoppingCart,
-  Check
 } from 'lucide-react';
 import { mockDb } from '../services/mockDb';
-import { Product, User as UserType } from '../types';
+import { Product, Reservation, SiteSettings } from '../types';
 
 export const ProductDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
 
+  // Fix: Use async/await to load product and settings
   useEffect(() => {
-    if (slug) {
-      const p = mockDb.getProductBySlug(slug);
-      if (p) setProduct(p);
-      else navigate('/produtos');
-    }
-    const auth = mockDb.getAuth();
-    setCurrentUser(auth.user);
+    const loadData = async () => {
+      if (slug) {
+        const [p, s] = await Promise.all([
+          mockDb.getProductBySlug(slug),
+          mockDb.getSettings()
+        ]);
+        if (p) {
+          setProduct(p);
+        } else {
+          navigate('/produtos');
+        }
+        setSettings(s);
+      }
+    };
+    loadData();
   }, [slug, navigate]);
 
   if (!product) return null;
 
-  const handleAddToCart = () => {
-    mockDb.addToCart(product);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+  const handleWhatsAppInquiry = () => {
+    // Registrar um lead/reserva mockada para o administrador ver no painel
+    const lead: Reservation = {
+      id: Math.random().toString(36).substr(2, 9).toUpperCase(),
+      productId: product.id,
+      productTitle: product.title,
+      productSku: product.sku,
+      userId: 'visitante',
+      userName: 'Interessado (WhatsApp)',
+      userPhone: 'Pendente',
+      status: 'new',
+      createdAt: new Date().toISOString()
+    };
+    mockDb.addReservation(lead);
+
+    const message = `Olá, quero saber mais sobre ${product.title} (SKU: ${product.sku})`;
+    // Fix: Safely access whatsapp from settings
+    const whatsapp = settings?.whatsapp || '5500000000000';
+    const url = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
   };
 
   return (
@@ -51,7 +73,7 @@ export const ProductDetail: React.FC = () => {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Visual Gallery */}
+          {/* Gallery */}
           <div className="space-y-6">
             <div className="aspect-video rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-2xl relative group bg-slate-100">
               <img 
@@ -108,7 +130,7 @@ export const ProductDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Product Info */}
+          {/* Info */}
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <span className="bg-slate-100 text-slate-600 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-slate-200">
@@ -150,30 +172,15 @@ export const ProductDetail: React.FC = () => {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="mt-auto space-y-4">
+            {/* Main CTA */}
+            <div className="mt-auto pt-6 border-t border-slate-100">
               <button 
-                onClick={handleAddToCart}
-                className={`w-full py-5 rounded-[1.5rem] font-bold text-xl transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${addedToCart ? 'bg-green-500 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                onClick={handleWhatsAppInquiry}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-6 rounded-[2rem] font-bold text-2xl transition-all shadow-xl hover:shadow-green-200 active:scale-95 flex items-center justify-center gap-4 group"
               >
-                {addedToCart ? (
-                  <>
-                    <Check size={24} /> Adicionado!
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart size={24} /> Adicionar ao Carrinho
-                  </>
-                )}
+                <Phone size={32} className="group-hover:rotate-12 transition-transform" /> Consultar no WhatsApp
               </button>
-              
-              <a 
-                href={`https://wa.me/5511999999999?text=Olá, quero saber mais sobre ${product.title} (SKU: ${product.sku})`}
-                target="_blank"
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-5 rounded-[1.5rem] font-bold text-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3"
-              >
-                <Phone size={24} /> Dúvida por WhatsApp
-              </a>
+              <p className="text-center text-slate-400 text-xs mt-4 font-bold uppercase tracking-widest">Atendimento especializado em minutos</p>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Filter, SlidersHorizontal, ChevronDown, Package } from 'lucide-react';
 import { mockDb } from '../services/mockDb';
-import { Product } from '../types';
+import { Product, SiteSettings } from '../types';
 import { CATEGORIES, BRANDS } from '../constants';
 
 export const Catalog: React.FC = () => {
@@ -11,13 +11,23 @@ export const Catalog: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
 
   // Filters state
   const [selectedCat, setSelectedCat] = useState(searchParams.get('cat') || 'Todos');
   const [selectedBrand, setSelectedBrand] = useState(searchParams.get('brand') || 'Todas');
 
+  // Fix: Handle asynchronous data loading in useEffect
   useEffect(() => {
-    setProducts(mockDb.getProducts());
+    const loadData = async () => {
+      const [prodData, settingsData] = await Promise.all([
+        mockDb.getProducts(),
+        mockDb.getSettings()
+      ]);
+      setProducts(prodData);
+      setSettings(settingsData);
+    };
+    loadData();
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -32,8 +42,9 @@ export const Catalog: React.FC = () => {
     });
   }, [products, searchTerm, selectedCat, selectedBrand]);
 
-  const WHATSAPP_NUMBER = '5511999999999';
-  const RARE_PARTS_MESSAGE = encodeURIComponent("Olá! Não encontrei a peça que procuro no catálogo. Vocês poderiam me ajudar a encontrar?");
+  const RARE_PARTS_MESSAGE = encodeURIComponent(
+    "Olá! Não encontrei a peça que procuro no catálogo. Vocês poderiam me ajudar a encontrar?"
+  );
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
@@ -116,8 +127,9 @@ export const Catalog: React.FC = () => {
               <div className="relative z-10">
                 <h4 className="font-bold mb-2">Peças raras?</h4>
                 <p className="text-sm text-orange-100 mb-4 leading-relaxed">Nós buscamos para você se não estiver no catálogo.</p>
+                {/* Fix: Safely access settings property */}
                 <a 
-                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${RARE_PARTS_MESSAGE}`}
+                  href={settings ? `https://wa.me/${settings.whatsapp}?text=${RARE_PARTS_MESSAGE}` : '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block bg-white text-orange-600 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider shadow-lg transform group-hover:scale-105 transition-transform"

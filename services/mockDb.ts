@@ -1,19 +1,12 @@
 
-import { Product, Reservation, User, AuthState, CartItem, SiteSettings } from '../types';
+import { supabase } from './supabase';
+import { Product, Reservation, User, AuthState, SiteSettings, CartItem } from '../types';
 import { INITIAL_PRODUCTS } from '../constants';
 
-const KEYS = {
-  PRODUCTS: 'autopart_products',
-  RESERVATIONS: 'autopart_reservations',
-  AUTH: 'autopart_auth',
-  CART: 'autopart_cart',
-  SETTINGS: 'autopart_settings'
-};
-
 const DEFAULT_SETTINGS: SiteSettings = {
-  name: 'AutoPart',
+  name: 'AutocarExpress',
   subtext: 'Desmanche Especializado',
-  whatsapp: '5511999999999',
+  whatsapp: '5511990072808',
   cnpj: '00.000.000/0001-00',
   workingHours: {
     weekdays: '08:00 às 18:00',
@@ -22,122 +15,223 @@ const DEFAULT_SETTINGS: SiteSettings = {
 };
 
 export const mockDb = {
-  init: () => {
-    if (!localStorage.getItem(KEYS.PRODUCTS)) {
-      localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
-    }
-    if (!localStorage.getItem(KEYS.RESERVATIONS)) {
-      localStorage.setItem(KEYS.RESERVATIONS, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(KEYS.CART)) {
-      localStorage.setItem(KEYS.CART, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(KEYS.SETTINGS)) {
-      localStorage.setItem(KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+  // Inicializa o banco e verifica se o usuário está logado no Supabase
+  init: async () => {
+    try {
+      const { data: settingsData } = await supabase.from('site_settings').select('id').single();
+      if (!settingsData) {
+        await mockDb.saveSettings(DEFAULT_SETTINGS);
+      }
+
+      const { count } = await supabase.from('products').select('*', { count: 'exact', head: true });
+      if (count === 0) {
+        const payloads = INITIAL_PRODUCTS.map(product => ({
+          id: product.id,
+          slug: product.slug,
+          sku: product.sku,
+          title: product.title,
+          category: product.category,
+          brand: product.brand,
+          model: product.model,
+          year_from: product.yearFrom,
+          year_to: product.yearTo,
+          condition: product.condition,
+          description: product.description,
+          compatibility: product.compatibility,
+          price_label: product.priceLabel,
+          images: product.images,
+          status: product.status,
+          created_at: product.createdAt
+        }));
+        await supabase.from('products').upsert(payloads);
+      }
+    } catch (e) {
+      console.warn("Erro na inicialização:", e);
     }
   },
 
-  // Settings
-  getSettings: (): SiteSettings => {
-    return JSON.parse(localStorage.getItem(KEYS.SETTINGS) || JSON.stringify(DEFAULT_SETTINGS));
-  },
-  saveSettings: (settings: SiteSettings) => {
-    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
-    window.dispatchEvent(new Event('settingsUpdated'));
-  },
-
-  // Products
-  getProducts: (): Product[] => {
-    return JSON.parse(localStorage.getItem(KEYS.PRODUCTS) || '[]');
-  },
-  getProductBySlug: (slug: string): Product | undefined => {
-    return mockDb.getProducts().find(p => p.slug === slug);
-  },
-  saveProduct: (product: Product) => {
-    const products = mockDb.getProducts();
-    const index = products.findIndex(p => p.id === product.id);
-    if (index > -1) {
-      products[index] = product;
-    } else {
-      products.push(product);
-    }
-    localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(products));
-    window.dispatchEvent(new Event('productsUpdated'));
-  },
-  deleteProduct: (id: string) => {
-    const products = mockDb.getProducts().filter(p => p.id !== id);
-    localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(products));
-    window.dispatchEvent(new Event('productsUpdated'));
+  getSettings: async (): Promise<SiteSettings> => {
+    const { data, error } = await supabase.from('site_settings').select('*').single();
+    if (error || !data) return DEFAULT_SETTINGS;
+    return {
+      name: data.name,
+      subtext: data.subtext,
+      whatsapp: data.whatsapp,
+      cnpj: data.cnpj,
+      workingHours: data.working_hours
+    };
   },
 
-  // Cart
+  saveSettings: async (settings: SiteSettings) => {
+    const { error } = await supabase.from('site_settings').upsert({
+      id: 1, 
+      name: settings.name,
+      subtext: settings.subtext,
+      whatsapp: settings.whatsapp,
+      cnpj: settings.cnpj,
+      working_hours: settings.workingHours
+    });
+    if (!error) window.dispatchEvent(new Event('settingsUpdated'));
+  },
+
+  getProducts: async (): Promise<Product[]> => {
+    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (error) return [];
+    return data.map(p => ({
+      id: p.id,
+      slug: p.slug,
+      sku: p.sku,
+      title: p.title,
+      category: p.category,
+      brand: p.brand,
+      model: p.model,
+      yearFrom: p.year_from,
+      yearTo: p.year_to,
+      condition: p.condition,
+      description: p.description,
+      compatibility: p.compatibility,
+      priceLabel: p.price_label,
+      images: p.images,
+      status: p.status,
+      createdAt: p.created_at
+    }));
+  },
+
+  getProductBySlug: async (slug: string): Promise<Product | undefined> => {
+    const { data, error } = await supabase.from('products').select('*').eq('slug', slug).single();
+    if (error || !data) return undefined;
+    return {
+      id: data.id,
+      slug: data.slug,
+      sku: data.sku,
+      title: data.title,
+      category: data.category,
+      brand: data.brand,
+      model: data.model,
+      yearFrom: data.year_from,
+      yearTo: data.year_to,
+      condition: data.condition,
+      description: data.description,
+      compatibility: data.compatibility,
+      priceLabel: data.price_label,
+      images: data.images,
+      status: data.status,
+      createdAt: data.created_at
+    };
+  },
+
+  saveProduct: async (product: Product) => {
+    const payload = {
+      id: product.id,
+      slug: product.slug,
+      sku: product.sku,
+      title: product.title,
+      category: product.category,
+      brand: product.brand,
+      model: product.model,
+      year_from: product.yearFrom,
+      year_to: product.yearTo,
+      condition: product.condition,
+      description: product.description,
+      compatibility: product.compatibility,
+      price_label: product.priceLabel,
+      images: product.images,
+      status: product.status,
+      created_at: product.createdAt
+    };
+    const { error } = await supabase.from('products').upsert(payload);
+    if (!error) window.dispatchEvent(new Event('productsUpdated'));
+  },
+
+  deleteProduct: async (id: string) => {
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (!error) window.dispatchEvent(new Event('productsUpdated'));
+  },
+
+  getReservations: async (): Promise<Reservation[]> => {
+    const { data, error } = await supabase.from('reservations').select('*').order('created_at', { ascending: false });
+    if (error) return [];
+    return data.map(r => ({
+      id: r.id,
+      productId: r.product_id,
+      productTitle: r.product_title,
+      productSku: r.product_sku,
+      userId: r.user_id,
+      userName: r.user_name,
+      userPhone: r.user_phone,
+      status: r.status,
+      createdAt: r.created_at
+    }));
+  },
+
+  addReservation: async (reservation: Reservation) => {
+    await supabase.from('reservations').insert({
+      id: reservation.id,
+      product_id: reservation.productId,
+      product_title: reservation.productTitle,
+      product_sku: reservation.productSku,
+      user_id: reservation.userId,
+      user_name: reservation.userName,
+      user_phone: reservation.userPhone,
+      status: reservation.status,
+      created_at: reservation.createdAt
+    });
+  },
+
+  updateReservationStatus: async (id: string, status: Reservation['status']) => {
+    await supabase.from('reservations').update({ status }).eq('id', id);
+  },
+
+  // Auth real utilizando Supabase session
+  getAuth: async (): Promise<AuthState> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return { user: null, isAuthenticated: false };
+    
+    return {
+      user: {
+        id: session.user.id,
+        email: session.user.email || '',
+        name: session.user.user_metadata.full_name || 'Admin',
+        role: 'admin'
+      },
+      isAuthenticated: true
+    };
+  },
+
+  logout: async () => {
+    await supabase.auth.signOut();
+  },
+
+  // Cart management (local storage based)
   getCart: (): CartItem[] => {
-    return JSON.parse(localStorage.getItem(KEYS.CART) || '[]');
+    const cart = localStorage.getItem('autocar_cart');
+    return cart ? JSON.parse(cart) : [];
   },
-  addToCart: (product: Product) => {
-    const cart = mockDb.getCart();
-    const existing = cart.find(item => item.product.id === product.id);
-    if (existing) {
-      existing.quantity += 1;
+
+  updateCartQuantity: (productId: string, quantity: number) => {
+    let cart = mockDb.getCart();
+    if (quantity <= 0) {
+      cart = cart.filter(item => item.product.id !== productId);
     } else {
-      cart.push({ product, quantity: 1 });
+      cart = cart.map(item => item.product.id === productId ? { ...item, quantity } : item);
     }
-    localStorage.setItem(KEYS.CART, JSON.stringify(cart));
+    localStorage.setItem('autocar_cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cartUpdated'));
   },
+
   removeFromCart: (productId: string) => {
     const cart = mockDb.getCart().filter(item => item.product.id !== productId);
-    localStorage.setItem(KEYS.CART, JSON.stringify(cart));
+    localStorage.setItem('autocar_cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cartUpdated'));
   },
-  updateCartQuantity: (productId: string, quantity: number) => {
-    const cart = mockDb.getCart();
-    const index = cart.findIndex(item => item.product.id === productId);
-    if (index > -1) {
-      if (quantity <= 0) {
-        cart.splice(index, 1);
-      } else {
-        cart[index].quantity = quantity;
-      }
-      localStorage.setItem(KEYS.CART, JSON.stringify(cart));
-      window.dispatchEvent(new Event('cartUpdated'));
-    }
-  },
+
   clearCart: () => {
-    localStorage.setItem(KEYS.CART, JSON.stringify([]));
+    localStorage.removeItem('autocar_cart');
     window.dispatchEvent(new Event('cartUpdated'));
   },
 
-  // Reservations
-  getReservations: (): Reservation[] => {
-    return JSON.parse(localStorage.getItem(KEYS.RESERVATIONS) || '[]');
-  },
-  getUserReservations: (userId: string): Reservation[] => {
-    return mockDb.getReservations().filter(r => r.userId === userId);
-  },
-  addReservation: (reservation: Reservation) => {
-    const reservations = mockDb.getReservations();
-    reservations.push(reservation);
-    localStorage.setItem(KEYS.RESERVATIONS, JSON.stringify(reservations));
-  },
-  updateReservationStatus: (id: string, status: Reservation['status']) => {
-    const reservations = mockDb.getReservations();
-    const index = reservations.findIndex(r => r.id === id);
-    if (index > -1) {
-      reservations[index].status = status;
-      localStorage.setItem(KEYS.RESERVATIONS, JSON.stringify(reservations));
-    }
-  },
-
-  // Auth
-  getAuth: (): AuthState => {
-    return JSON.parse(localStorage.getItem(KEYS.AUTH) || '{"user": null, "isAuthenticated": false}');
-  },
-  setAuth: (user: User | null) => {
-    const auth: AuthState = { user, isAuthenticated: !!user };
-    localStorage.setItem(KEYS.AUTH, JSON.stringify(auth));
-  },
-  logout: () => {
-    localStorage.removeItem(KEYS.AUTH);
+  getUserReservations: async (userId: string): Promise<Reservation[]> => {
+    const all = await mockDb.getReservations();
+    return all.filter(r => r.userId === userId);
   }
 };

@@ -3,19 +3,29 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Package, Calendar, Clock, ArrowRight, Search, LayoutGrid } from 'lucide-react';
 import { mockDb } from '../services/mockDb';
-import { Reservation } from '../types';
+import { Reservation, SiteSettings } from '../types';
 
 export const MyReservations: React.FC = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const navigate = useNavigate();
 
+  // Fix: Await getAuth() to resolve the promise before checking authentication and accessing user ID
   useEffect(() => {
-    const auth = mockDb.getAuth();
-    if (!auth.isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    setReservations(mockDb.getUserReservations(auth.user!.id));
+    const loadData = async () => {
+      const auth = await mockDb.getAuth();
+      if (!auth.isAuthenticated) {
+        navigate('/login');
+        return;
+      }
+      const [resData, settingsData] = await Promise.all([
+        mockDb.getUserReservations(auth.user!.id),
+        mockDb.getSettings()
+      ]);
+      setReservations(resData);
+      setSettings(settingsData);
+    };
+    loadData();
   }, [navigate]);
 
   const getStatusColor = (status: Reservation['status']) => {
@@ -36,6 +46,13 @@ export const MyReservations: React.FC = () => {
       case 'cancelled': return 'Cancelada';
       default: return status;
     }
+  };
+
+  const getWhatsAppLink = (res: Reservation) => {
+    const message = `Olá, sobre minha reserva ${res.id} do produto ${res.productTitle}`;
+    // Fix: Safely access whatsapp from settings
+    const whatsapp = settings?.whatsapp || '5500000000000';
+    return `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
   };
 
   return (
@@ -80,7 +97,9 @@ export const MyReservations: React.FC = () => {
                   
                   <div className="flex items-center gap-3">
                     <a 
-                      href={`https://wa.me/5511999999999?text=Olá, sobre minha reserva ${res.id} do produto ${res.productTitle}`}
+                      href={getWhatsAppLink(res)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex-grow md:flex-grow-0 px-6 py-3 bg-green-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-green-600 shadow-lg"
                     >
                       WhatsApp

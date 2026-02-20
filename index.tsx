@@ -2,6 +2,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { mockDb } from './services/mockDb';
+
+// Inicializa o banco de dados antes de qualquer renderização
+mockDb.init();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

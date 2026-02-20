@@ -3,20 +3,28 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, Phone, Package } from 'lucide-react';
 import { mockDb } from '../services/mockDb';
-import { CartItem, Reservation } from '../types';
+import { CartItem, Reservation, SiteSettings } from '../types';
 
 export const Cart: React.FC = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const navigate = useNavigate();
 
-  const loadCart = () => {
+  // Fix: Make loadData async to await site settings and populate cart from mockDb
+  const loadData = async () => {
     setCartItems(mockDb.getCart());
+    const s = await mockDb.getSettings();
+    setSettings(s);
   };
 
   useEffect(() => {
-    loadCart();
-    window.addEventListener('cartUpdated', loadCart);
-    return () => window.removeEventListener('cartUpdated', loadCart);
+    loadData();
+    window.addEventListener('cartUpdated', loadData);
+    window.addEventListener('settingsUpdated', loadData);
+    return () => {
+      window.removeEventListener('cartUpdated', loadData);
+      window.removeEventListener('settingsUpdated', loadData);
+    };
   }, []);
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
@@ -27,8 +35,9 @@ export const Cart: React.FC = () => {
     mockDb.removeFromCart(productId);
   };
 
-  const handleCheckout = () => {
-    const auth = mockDb.getAuth();
+  // Fix: Await getAuth() to resolve authentication state before checkout
+  const handleCheckout = async () => {
+    const auth = await mockDb.getAuth();
     if (!auth.isAuthenticated) {
       alert('Por favor, faça login para realizar o pedido.');
       navigate('/login');
@@ -53,12 +62,14 @@ export const Cart: React.FC = () => {
 
     const itemsList = cartItems.map(item => `- ${item.product.title} (${item.quantity}x) [SKU: ${item.product.sku}]`).join('\n');
     const message = encodeURIComponent(
-      `Olá! Fiz um pedido pelo site e gostaria de finalizar o orçamento:\n\n${itemsList}\n\nFavor entrar em contato.`
+      `Olá! Fiz um pedido pelo site e gostaria de finalizar o orçamento:\n\n${itemsList}`
     );
     
     // Limpar carrinho e redirecionar
     mockDb.clearCart();
-    window.open(`https://wa.me/5511999999999?text=${message}`, '_blank');
+    // Fix: Safely access whatsapp from settings
+    const whatsapp = settings?.whatsapp || '5500000000000';
+    window.open(`https://wa.me/${whatsapp}?text=${message}`, '_blank');
     navigate('/minhas-reservas');
   };
 

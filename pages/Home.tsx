@@ -3,16 +3,48 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ShieldCheck, Truck, Star, ChevronRight, Phone, ArrowRight } from 'lucide-react';
 import { mockDb } from '../services/mockDb';
-import { Product } from '../types';
+import { Product, SiteSettings } from '../types';
 
 export const Home: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [products, siteSettings] = await Promise.all([
+        mockDb.getProducts(),
+        mockDb.getSettings()
+      ]);
+      // Pegamos 10 produtos para preencher perfeitamente 2 linhas de 5 no desktop
+      setFeaturedProducts(products.slice(0, 10));
+      setSettings(siteSettings);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Get latest products to show in the scrolling section
-    const products = mockDb.getProducts();
-    setFeaturedProducts(products.slice(0, 10)); // Show up to 10 products
+    loadData();
+    window.addEventListener('productsUpdated', loadData);
+    window.addEventListener('settingsUpdated', loadData);
+    return () => {
+      window.removeEventListener('productsUpdated', loadData);
+      window.removeEventListener('settingsUpdated', loadData);
+    };
   }, []);
+
+  if (!settings && loading) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-bold uppercase tracking-widest animate-pulse">Carregando...</div>;
+  
+  const currentSettings = settings || { whatsapp: '5500000000000' } as SiteSettings;
+
+  const getWhatsAppCTA = () => {
+    const message = `Olá! Gostaria de fazer uma consulta sobre peças e sucatas em estoque.`;
+    return `https://wa.me/${currentSettings.whatsapp}?text=${encodeURIComponent(message)}`;
+  };
 
   return (
     <div className="w-full">
@@ -33,17 +65,17 @@ export const Home: React.FC = () => {
               Desmanche Especializado em Veículos e Caminhões
             </span>
             <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6 tracking-tighter">
-              O Maior Pátio de <br/>
-              <span className="text-orange-600">Sucatas da Região.</span>
+              Rede Nacional de <br/>
+              <span className="text-orange-600">Sucatas e Peças Automotivas.</span>
             </h1>
             <p className="text-xl text-slate-300 mb-8 leading-relaxed max-w-xl">
               Especialistas em desmonte de veículos leves e pesados. Milhares de peças originais com procedência garantida e nota fiscal.
             </p>
-            <div className="flex flex-col sm:row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Link to="/produtos" className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all transform hover:-translate-y-1 shadow-xl">
                 <Search size={20} /> Ver Catálogo de Sucatas
               </Link>
-              <a href="https://wa.me/5511999999999" className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all transform hover:-translate-y-1">
+              <a href={getWhatsAppCTA()} target="_blank" rel="noopener noreferrer" className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all transform hover:-translate-y-1">
                 <Phone size={20} /> Falar com Vendedor
               </a>
             </div>
@@ -51,57 +83,59 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Dynamic Product Showcase (Scrolling) */}
-      <section className="bg-white border-b border-slate-100 overflow-hidden">
-        <div className="container mx-auto px-4 py-12">
-          <div className="flex items-center justify-between mb-8">
+      {/* Dynamic Product Showcase (Grid de 2 Linhas) */}
+      <section className="bg-white border-b border-slate-100">
+        <div className="container mx-auto px-4 py-16">
+          <div className="flex items-center justify-between mb-12">
             <div className="flex items-center gap-3">
               <div className="w-2 h-8 bg-orange-600 rounded-full"></div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Sucatas em Destaque</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Sucatas em Destaque</h2>
             </div>
             <Link to="/produtos" className="text-orange-600 font-bold flex items-center gap-1 hover:gap-2 transition-all text-sm uppercase tracking-wider">
-              Ver Tudo <ArrowRight size={16} />
+              Ver Catálogo Completo <ArrowRight size={16} />
             </Link>
           </div>
           
-          <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide snap-x -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {featuredProducts.length > 0 ? featuredProducts.map((p) => (
               <Link 
                 key={p.id} 
                 to={`/produto/${p.slug}`} 
-                className="flex-shrink-0 w-[320px] snap-start group bg-slate-50 rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl hover:shadow-orange-100 transition-all duration-300"
+                className="group bg-slate-50 rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl hover:shadow-orange-100 transition-all duration-300 flex flex-col h-full"
               >
-                <div className="relative h-56 overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
                   <img 
                     src={p.images[0]} 
                     alt={p.title} 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute top-3 left-3">
-                    <span className="bg-white/90 backdrop-blur-sm text-slate-900 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
+                    <span className="bg-white/90 backdrop-blur-sm text-slate-900 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">
                       {p.brand}
                     </span>
                   </div>
                 </div>
-                <div className="p-5">
-                  <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest block mb-1">{p.category}</span>
-                  <h3 className="text-base font-extrabold text-slate-900 mb-2 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors">
+                <div className="p-5 flex flex-col flex-grow">
+                  <span className="text-[9px] font-bold text-orange-600 uppercase tracking-widest block mb-1">{p.category}</span>
+                  <h3 className="text-sm font-extrabold text-slate-900 mb-2 leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors">
                     {p.title}
                   </h3>
-                  <p className="text-xs text-slate-500 mb-4 font-medium">{p.model} • {p.yearFrom}/{p.yearTo}</p>
+                  <p className="text-[10px] text-slate-500 mb-4 font-medium uppercase tracking-tight">{p.model} • {p.yearFrom}/{p.yearTo}</p>
                   
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-200/50">
-                    <span className="text-lg font-black text-slate-900">{p.priceLabel}</span>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 mt-auto">
+                    <span className="text-base font-black text-slate-900">{p.priceLabel}</span>
                     <div className="bg-white p-2 rounded-xl text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors shadow-sm">
-                      <ChevronRight size={16} />
+                      <ChevronRight size={14} />
                     </div>
                   </div>
                 </div>
               </Link>
-            )) : (
-              Array.from({length: 4}).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[320px] h-[380px] bg-slate-100 rounded-3xl animate-pulse"></div>
+            )) : loading ? (
+              Array.from({length: 10}).map((_, i) => (
+                <div key={i} className="w-full h-[320px] bg-slate-100 rounded-3xl animate-pulse"></div>
               ))
+            ) : (
+              <div className="col-span-full py-20 text-center text-slate-400 font-bold">Nenhum item em destaque no momento.</div>
             )}
           </div>
         </div>
@@ -158,7 +192,7 @@ export const Home: React.FC = () => {
                 Precisa de peças para seu carro ou caminhão? Temos um pátio completo com veículos leves e pesados e disponibilidade imediata para milhares de itens.
               </p>
               <div className="flex flex-wrap justify-center gap-6">
-                <a href="https://wa.me/5511999999999" className="bg-green-500 hover:bg-green-600 text-white px-10 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all shadow-2xl hover:scale-105 active:scale-95">
+                <a href={getWhatsAppCTA()} target="_blank" rel="noopener noreferrer" className="bg-green-500 hover:bg-green-600 text-white px-10 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all shadow-2xl hover:scale-105 active:scale-95">
                   <Phone size={24} /> Consultar Peças e Sucatas
                 </a>
               </div>

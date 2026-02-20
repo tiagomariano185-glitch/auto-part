@@ -46,8 +46,6 @@ export interface Reservation {
   userId: string;
   userName: string;
   userPhone: string;
-  city?: string;
-  observation?: string;
   status: ReservationStatus;
   createdAt: string;
 }
