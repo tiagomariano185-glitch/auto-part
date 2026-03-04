@@ -1,8 +1,18 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { History, Target, Eye, ShieldCheck, Leaf, Users, Truck, Globe, Award } from 'lucide-react';
+import { mockDb } from '../services/mockDb';
+import { SiteSettings } from '../types';
 
 export const About: React.FC = () => {
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    mockDb.getSettings().then(setSettings);
+  }, []);
+
+  const cnpj = settings?.cnpj || '00.000.000/0001-00';
+
   return (
     <div className="bg-white min-h-screen">
       <section className="relative py-24 bg-slate-900 overflow-hidden">
@@ -48,6 +58,14 @@ export const About: React.FC = () => {
               <p className="text-slate-600 font-medium leading-relaxed">Ser referência nacional em desmanche especializado 100% digital e excelência logística.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-12 bg-slate-50 border-t border-slate-100">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
+            {settings?.name || 'AutoCar'} – Desmanche Especializado • CNPJ: {cnpj}
+          </p>
         </div>
       </section>
     </div>

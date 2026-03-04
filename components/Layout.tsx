@@ -40,7 +40,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     navigate('/');
   };
 
-  const currentSettings = settings || { whatsapp: '5500000000000', workingHours: { weekdays: '...', saturday: '...' } } as SiteSettings;
+  const currentSettings = settings || { 
+    whatsapp: '5500000000000', 
+    cnpj: '00.000.000/0001-00',
+    workingHours: { weekdays: '...', saturday: '...' } 
+  } as SiteSettings;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -137,6 +141,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Phone size={16} className="text-orange-500" />
                   <span>{currentSettings.whatsapp}</span>
                 </li>
+                {currentSettings.cnpj && (
+                  <li className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">
+                    CNPJ: {currentSettings.cnpj}
+                  </li>
+                )}
               </ul>
             </div>
             <div>
