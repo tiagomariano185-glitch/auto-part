@@ -124,9 +124,19 @@ export const Home: React.FC = () => {
                   
                   <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 mt-auto">
                     <span className="text-base font-black text-slate-900">{p.priceLabel}</span>
-                    <div className="bg-white p-2 rounded-xl text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors shadow-sm">
-                      <ChevronRight size={14} />
-                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const message = encodeURIComponent(`Olá, quero saber mais sobre ${p.title} (SKU: ${p.sku})`);
+                        const whatsapp = currentSettings.whatsapp;
+                        window.open(`https://wa.me/${whatsapp}?text=${message}`, '_blank');
+                      }}
+                      className="bg-white p-2 rounded-xl text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors shadow-sm active:scale-90"
+                      title="Consultar no WhatsApp"
+                    >
+                      <Phone size={14} />
+                    </button>
                   </div>
                 </div>
               </Link>

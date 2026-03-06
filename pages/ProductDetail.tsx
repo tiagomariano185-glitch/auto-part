@@ -146,7 +146,21 @@ export const ProductDetail: React.FC = () => {
             <div className="bg-orange-50 rounded-3xl p-6 mb-8 flex items-center justify-between border border-orange-100">
               <div className="flex flex-col">
                 <span className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-1">Valor Unitário</span>
-                <span className="text-3xl font-black text-slate-900">{product.priceLabel}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-black text-slate-900">{product.priceLabel}</span>
+                  {product.priceLabel.toLowerCase().includes('consulta') && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleWhatsAppInquiry();
+                      }}
+                      className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-all shadow-lg active:scale-90"
+                      title="Consultar no WhatsApp"
+                    >
+                      <Phone size={18} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 

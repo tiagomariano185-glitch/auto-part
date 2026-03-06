@@ -151,9 +151,18 @@ export const Cart: React.FC = () => {
                   <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Total de Peças</span>
                   <span className="font-black text-slate-900">{cartItems.reduce((s, i) => s + i.quantity, 0)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Total Estimado</span>
-                  <span className="font-black text-slate-900">Sob consulta</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-slate-900">Sob consulta</span>
+                    <button 
+                      onClick={handleCheckout}
+                      className="bg-green-500 text-white p-1.5 rounded-full hover:bg-green-600 transition-all shadow-md active:scale-90"
+                      title="Consultar no WhatsApp"
+                    >
+                      <Phone size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
 

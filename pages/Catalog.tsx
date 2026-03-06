@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Filter, SlidersHorizontal, ChevronDown, Package } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, ChevronDown, Package, Phone } from 'lucide-react';
 import { mockDb } from '../services/mockDb';
 import { Product, SiteSettings } from '../types';
 import { CATEGORIES, BRANDS } from '../constants';
@@ -175,10 +175,22 @@ export const Catalog: React.FC = () => {
                       <p className="text-sm text-slate-500 mb-4 line-clamp-1">{p.brand} {p.model} ({p.yearFrom}-{p.yearTo})</p>
                       
                       <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                        <span className="text-xl font-black text-slate-900">{p.priceLabel}</span>
-                        <div className="w-10 h-10 bg-slate-100 group-hover:bg-orange-600 group-hover:text-white rounded-xl flex items-center justify-center transition-all">
-                          <ChevronDown size={20} className="-rotate-90" />
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-black text-slate-900">{p.priceLabel}</span>
                         </div>
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const message = encodeURIComponent(`Olá, quero saber mais sobre ${p.title} (SKU: ${p.sku})`);
+                            const whatsapp = settings?.whatsapp || '5500000000000';
+                            window.open(`https://wa.me/${whatsapp}?text=${message}`, '_blank');
+                          }}
+                          className="w-10 h-10 bg-slate-100 group-hover:bg-green-500 group-hover:text-white rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-90"
+                          title="Consultar no WhatsApp"
+                        >
+                          <Phone size={18} />
+                        </button>
                       </div>
                     </div>
                   </Link>
