@@ -39,7 +39,7 @@ export const Home: React.FC = () => {
 
   if (!settings && loading) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white font-bold uppercase tracking-widest animate-pulse">Carregando...</div>;
   
-  const currentSettings = settings || { whatsapp: '5500000000000' } as SiteSettings;
+  const currentSettings = settings || { whatsapp: '5511971242101' } as SiteSettings;
 
   const getWhatsAppCTA = () => {
     const message = `Olá! Gostaria de fazer uma consulta sobre peças e sucatas em estoque.`;

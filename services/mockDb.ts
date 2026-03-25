@@ -6,7 +6,7 @@ import { INITIAL_PRODUCTS } from '../constants';
 const DEFAULT_SETTINGS: SiteSettings = {
   name: 'AutocarExpress',
   subtext: 'Desmanche Especializado',
-  whatsapp: '5511990072808',
+  whatsapp: '5511971242101',
   cnpj: '00.000.000/0001-00',
   workingHours: {
     weekdays: '08:00 às 18:00',
@@ -56,7 +56,7 @@ export const mockDb = {
     return {
       name: data.name,
       subtext: data.subtext,
-      whatsapp: data.whatsapp,
+      whatsapp: '5511971242101', // Fixed number
       cnpj: data.cnpj,
       workingHours: data.working_hours
     };
@@ -67,7 +67,7 @@ export const mockDb = {
       id: 1, 
       name: settings.name,
       subtext: settings.subtext,
-      whatsapp: settings.whatsapp,
+      whatsapp: '5511971242101', // Fixed number
       cnpj: settings.cnpj,
       working_hours: settings.workingHours
     });

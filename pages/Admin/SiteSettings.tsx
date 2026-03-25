@@ -116,13 +116,13 @@ export const SiteSettings: React.FC = () => {
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">WhatsApp de Vendas (DDD + Número)</label>
                 <input 
-                  type="text" 
-                  className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-orange-500 font-bold"
-                  value={settings.whatsapp}
-                  onChange={e => setSettings({...settings, whatsapp: e.target.value})}
-                  placeholder="Ex: 5511999999999"
+                   type="text" 
+                   className="w-full p-4 rounded-2xl bg-slate-100 border border-slate-200 font-bold text-slate-500 cursor-not-allowed"
+                   value="5511971242101"
+                   disabled
+                   title="Este número está fixado e não pode ser alterado."
                 />
-                <p className="text-[10px] text-slate-400 mt-2 font-medium">Este número será usado para todos os botões de consulta do site.</p>
+                <p className="text-[10px] text-orange-600 mt-2 font-black uppercase tracking-widest">Número fixado pelo sistema.</p>
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">CNPJ da Empresa</label>

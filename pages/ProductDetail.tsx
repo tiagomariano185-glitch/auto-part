@@ -60,7 +60,7 @@ export const ProductDetail: React.FC = () => {
 
     const message = `Olá, quero saber mais sobre ${product.title} (SKU: ${product.sku})`;
     // Fix: Safely access whatsapp from settings
-    const whatsapp = settings?.whatsapp || '5500000000000';
+    const whatsapp = settings?.whatsapp || '5511971242101';
     const url = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };

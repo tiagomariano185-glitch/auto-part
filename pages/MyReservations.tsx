@@ -51,7 +51,7 @@ export const MyReservations: React.FC = () => {
   const getWhatsAppLink = (res: Reservation) => {
     const message = `Olá, sobre minha reserva ${res.id} do produto ${res.productTitle}`;
     // Fix: Safely access whatsapp from settings
-    const whatsapp = settings?.whatsapp || '5500000000000';
+    const whatsapp = settings?.whatsapp || '5511971242101';
     return `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
   };
 

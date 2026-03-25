@@ -183,7 +183,7 @@ export const Catalog: React.FC = () => {
                             e.preventDefault();
                             e.stopPropagation();
                             const message = encodeURIComponent(`Olá, quero saber mais sobre ${p.title} (SKU: ${p.sku})`);
-                            const whatsapp = settings?.whatsapp || '5500000000000';
+                            const whatsapp = settings?.whatsapp || '5511971242101';
                             window.open(`https://wa.me/${whatsapp}?text=${message}`, '_blank');
                           }}
                           className="w-10 h-10 bg-slate-100 group-hover:bg-green-500 group-hover:text-white rounded-xl flex items-center justify-center transition-all shadow-sm active:scale-90"

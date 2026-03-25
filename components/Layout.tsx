@@ -41,7 +41,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const currentSettings = settings || { 
-    whatsapp: '5500000000000', 
+    whatsapp: '5511971242101', 
     cnpj: '00.000.000/0001-00',
     workingHours: { weekdays: '...', saturday: '...' } 
   } as SiteSettings;

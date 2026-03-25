@@ -68,7 +68,7 @@ export const Cart: React.FC = () => {
     // Limpar carrinho e redirecionar
     mockDb.clearCart();
     // Fix: Safely access whatsapp from settings
-    const whatsapp = settings?.whatsapp || '5500000000000';
+    const whatsapp = settings?.whatsapp || '5511971242101';
     window.open(`https://wa.me/${whatsapp}?text=${message}`, '_blank');
     navigate('/minhas-reservas');
   };
